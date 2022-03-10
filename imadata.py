@@ -124,7 +124,9 @@ def add_repomd(repository, data, open_checksum, open_size, checksum, size, times
     ET.SubElement(
         data_element, "open-checksum", {"type": "sha256"}
     ).text = open_checksum
-    ET.SubElement(data_element, "location", {"href": f"repodata/{checksum}_{data.name}"})
+    ET.SubElement(
+        data_element, "location", {"href": f"repodata/{checksum}_{data.name}"}
+    )
     ET.SubElement(data_element, "timestamp").text = str(int(timestamp))
     ET.SubElement(data_element, "size").text = str(size)
     ET.SubElement(data_element, "open-size").text = str(open_size)
@@ -150,22 +152,32 @@ if __name__ == "__main__":
         default=multiprocessing.cpu_count(),
         help="allow N jobs at one. #CPUs with no arg",
     )
+    parser.add_argument(
+        "-m", "--modify", action="store_true", help="modify the repo data, using Python"
+    )
 
     args = parser.parse_args()
 
     imadata = imadata_xml(analyze_all(args.repository, args.jobs))
 
-    open_checksum = file_hash(imadata)
-    open_size = imadata.stat().st_size
+    if args.modify:
+        open_checksum = file_hash(imadata)
+        open_size = imadata.stat().st_size
 
-    imadata_gz = gzip_file(imadata)
+        imadata_gz = gzip_file(imadata)
 
-    checksum = file_hash(imadata_gz)
-    size = imadata_gz.stat().st_size
-    timestamp = imadata_gz.stat().st_ctime
+        checksum = file_hash(imadata_gz)
+        size = imadata_gz.stat().st_size
+        timestamp = imadata_gz.stat().st_ctime
 
-    imadata_gz.rename(imadata_gz.with_name(f"{checksum}-{imadata_gz.name}"))
+        imadata_gz.rename(imadata_gz.with_name(f"{checksum}-{imadata_gz.name}"))
 
-    add_repomd(
-        args.repository, imadata_gz, open_checksum, open_size, checksum, size, timestamp
-    )
+        add_repomd(
+            args.repository,
+            imadata_gz,
+            open_checksum,
+            open_size,
+            checksum,
+            size,
+            timestamp,
+        )
