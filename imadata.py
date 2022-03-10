@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """Expand repomd metadata with IMA hashes."""
 
 import argparse
